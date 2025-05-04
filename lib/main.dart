@@ -20,7 +20,8 @@ class CarmaaApp extends StatelessWidget {
         ChangeNotifierProvider(create: (context) => SignupProvider()),
       ],
       child: MaterialApp(
-        title: 'Flutter Demo',
+        debugShowCheckedModeBanner: false,
+        title: 'Carmaa Worker',
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
           useMaterial3: true,

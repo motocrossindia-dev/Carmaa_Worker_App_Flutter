@@ -1,51 +1,95 @@
+import 'dart:developer';
+
+import 'package:carmaa_worker_app/features/auth/signup/signup_screen.dart';
+import 'package:carmaa_worker_app/features/dashboard/dashboard_screen.dart';
+import 'package:carmaa_worker_app/features/widgets/flutter_toast_messages.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'login_repository.dart';
 
 class LoginProvider extends ChangeNotifier {
+  final LoginRepository _repository = LoginRepository();
   String _phoneNumber = '';
   String _otp = '';
-  String _referralCode = '';
-  bool _useReferralCode = false;
+  bool _isLoading = false;
 
   String get phoneNumber => _phoneNumber;
   String get otp => _otp;
-  String get referralCode => _referralCode;
-  bool get useReferralCode => _useReferralCode;
+  bool get isLoading => _isLoading;
 
   void setPhoneNumber(String value) {
     _phoneNumber = value;
     notifyListeners();
   }
 
-  void setOtp(String value) {
+  void setOtp(String value, BuildContext context) {
     _otp = value;
-    notifyListeners();
-  }
-
-  void setReferralCode(String value) {
-    _referralCode = value;
-    notifyListeners();
-  }
-
-  void toggleReferralCode(bool? value) {
-    _useReferralCode = value ?? false;
+    if (value.length == 6) {
+      // Automatically verify when OTP is complete
+      verifyOtp(context);
+    }
     notifyListeners();
   }
 
   Future<void> sendOtp() async {
-    // Here you would implement actual OTP sending logic
-    print('Sending OTP to: $_phoneNumber');
-    // Simulating API call
-    await Future.delayed(const Duration(seconds: 1));
+    _isLoading = true;
+    notifyListeners();
+
+    final success = await _repository.sendOtp(_phoneNumber);
+    if (success) {
+      ToastMessage.showInfoLong(
+          "OTP sent successfully. Please enter otp down.");
+    } else {
+      ToastMessage.showErrorLong("Failed to send OTP. Please try again.");
+    }
+
+    _isLoading = false;
+    notifyListeners();
   }
 
-  Future<bool> verifyAndSignUp() async {
-    // Here you would implement actual verification and signup logic
-    print('Verifying OTP: $_otp for phone: $_phoneNumber');
-    if (_useReferralCode) {
-      print('Using referral code: $_referralCode');
+  Future<void> verifyOtp(BuildContext contex) async {
+    _isLoading = true;
+    notifyListeners();
+
+    final response = await _repository.verifyOtp(_phoneNumber, _otp);
+
+    _isLoading = false;
+    notifyListeners();
+
+    if (response == null) {
+      ToastMessage.showErrorLong("Failed to verify OTP. Please try again.");
+      return;
     }
-    // Simulating API call
-    await Future.delayed(const Duration(seconds: 1));
-    return true; // Return success/failure
+
+    if (response['success'] == false) {
+      ToastMessage.showErrorLong("Invalid OTP. Please try again.");
+      return;
+    }
+
+    log("Response: ${response.toString()}");
+
+    if (response != null) {
+      // Navigate based on 'created' flag
+      if (!response['created']) {
+        _navigateToSignup(contex);
+      } else {
+        _navigateToSignup(contex);
+        // _navigateToDashboard(contex);
+      }
+    }
+  }
+
+  void _navigateToSignup(BuildContext context) {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const SignupScreen()),
+    );
+  }
+
+  void _navigateToDashboard(BuildContext context) {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const DashboardScreen()),
+    );
   }
 }

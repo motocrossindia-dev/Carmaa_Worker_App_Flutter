@@ -1,6 +1,5 @@
 import 'package:carmaa_worker_app/features/auth/login/login_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -49,14 +48,11 @@ class _SplashScreenState extends State<SplashScreen>
     return Scaffold(
       backgroundColor: Colors.white,
       body: Center(
-        child: ScaleTransition(
-          scale: _animation,
-          child: Image.asset(
-            'assets/logo/LOGO_04.png', // Your logo here
-            width: 300,
-            height: 300,
-            // color: const Color(0xFF1E88E5), // Change color as needed
-          ),
+        child: Image.asset(
+          'assets/gif/app_animation_with_background.gif',
+          width: 900,
+          height: 900,
+          fit: BoxFit.contain,
         ),
       ),
     );

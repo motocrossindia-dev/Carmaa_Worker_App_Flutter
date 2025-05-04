@@ -1,30 +1,40 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+import 'signup_repository.dart';
 
-// Account Creation Provider
 class SignupProvider extends ChangeNotifier {
+  final SignupRepository _repository = SignupRepository();
+
   String _name = '';
+  String _email = '';
   String _phoneNumber = '';
   String _location = '';
   File? _aadharDocument;
   File? _photoDocument;
   File? _kycDocuments;
   bool _allowPoliceVerification = false;
+  String _roleType = 'individual'; // Default role type
 
   // Getters
   String get name => _name;
+  String get email => _email;
   String get phoneNumber => _phoneNumber;
   String get location => _location;
   File? get aadharDocument => _aadharDocument;
   File? get photoDocument => _photoDocument;
   File? get kycDocuments => _kycDocuments;
   bool get allowPoliceVerification => _allowPoliceVerification;
+  String get roleType => _roleType;
 
   // Setters
   void setName(String value) {
     _name = value;
+    notifyListeners();
+  }
+
+  void setEmail(String value) {
+    _email = value;
     notifyListeners();
   }
 
@@ -35,6 +45,11 @@ class SignupProvider extends ChangeNotifier {
 
   void setLocation(String value) {
     _location = value;
+    notifyListeners();
+  }
+
+  void setRoleType(String value) {
+    _roleType = value;
     notifyListeners();
   }
 
@@ -58,22 +73,24 @@ class SignupProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<bool> submitAccount() async {
+  Future<Map<String, dynamic>> submitAccount() async {
     // Validate required fields
-    if (_name.isEmpty || _phoneNumber.isEmpty || _location.isEmpty) {
-      return false;
+    if (_name.isEmpty || _email.isEmpty || _location.isEmpty) {
+      throw Exception('Please fill all required fields');
     }
 
-    // Here you would implement actual API call to create account
-    print('Creating account with:');
-    print('Name: $_name');
-    print('Phone: $_phoneNumber');
-    print('Location: $_location');
-    print('Police verification allowed: $_allowPoliceVerification');
-
-    // Simulating API call
-    await Future.delayed(const Duration(seconds: 1));
-    return true;
+    try {
+      final response = await _repository.createWorkerProfile(
+        name: _name,
+        email: _email,
+        location: _location,
+        aadhar: 'dummy-aadhar', // Replace with actual aadhar number
+        roleType: _roleType,
+      );
+      return response;
+    } catch (e) {
+      throw Exception('Failed to create account: $e');
+    }
   }
 
   Future<File?> pickFile() async {

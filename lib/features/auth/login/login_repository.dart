@@ -88,6 +88,7 @@ class LoginRepository {
               await prefs.setString(
                   'refresh_token', response.data['data']['refresh']);
 
+              log("access_token: ${response.data['data']['access']}");
               // Store worker info
               final worker = response.data['data']['worker'];
               await prefs.setString('worker_id', worker['worker_id']);

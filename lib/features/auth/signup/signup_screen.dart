@@ -7,7 +7,7 @@ class SignupScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accountProvider = Provider.of<SignupProvider>(context);
+    final accountProvider = context.watch<SignupProvider>();
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -18,20 +18,24 @@ class SignupScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 40),
-              const Text(
-                'Create Account',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
+              const Center(
+                child: Text(
+                  'Create Account',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
-                'Create your account to get started',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.black54,
+              const Center(
+                child: Text(
+                  'Create your account to get started',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.black54,
+                  ),
                 ),
               ),
               const SizedBox(height: 32),
@@ -121,34 +125,60 @@ class SignupScreen extends StatelessWidget {
                       title: const Text('Individual'),
                       value: 'individual',
                       groupValue: accountProvider.roleType,
-                      onChanged: (value) =>
-                          accountProvider.setRoleType(value ?? 'individual'),
+                      onChanged: (value) {
+                        accountProvider.setRoleType(value ?? 'individual');
+                        _showCustomDialog(
+                          context,
+                          'For Individual accounts: Please upload Police Verification document',
+                        );
+                      },
                     ),
                     Divider(height: 1, color: Colors.grey.shade300),
                     RadioListTile<String>(
                       title: const Text('Workshop'),
                       value: 'workshop',
                       groupValue: accountProvider.roleType,
-                      onChanged: (value) =>
-                          accountProvider.setRoleType(value ?? 'workshop'),
+                      onChanged: (value) {
+                        accountProvider.setRoleType(value ?? 'workshop');
+                        _showCustomDialog(
+                          context,
+                          'For Workshop accounts: Please upload GST certificate',
+                        );
+                      },
                     ),
                   ],
                 ),
               ),
               const SizedBox(height: 16),
 
-              // Upload KYC Documents
-              _buildUploadField(
-                context: context,
-                icon: Icons.upload_file_outlined,
-                label: 'Upload your KYC documents(GST/Police Verification)',
-                onTap: () async {
-                  final file = await accountProvider.pickFile();
-                  if (file != null) {
-                    accountProvider.setKycDocuments(file);
-                  }
-                },
-                hasFile: accountProvider.kycDocuments != null,
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildUploadField(
+                      context: context,
+                      icon: Icons.upload_file_outlined,
+                      label:
+                          'Upload your KYC documents(GST/Police Verification)',
+                      onTap: () async {
+                        final file = await accountProvider.pickFile();
+                        if (file != null) {
+                          accountProvider.setKycDocuments(file);
+                        }
+                      },
+                      hasFile: accountProvider.kycDocuments != null,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.info_outline, color: Colors.blue),
+                    onPressed: () {
+                      String message = accountProvider.roleType == 'individual'
+                          ? 'For Individual accounts: Please upload Police Verification document'
+                          : 'For Workshop accounts: Please upload GST certificate';
+                      _showCustomDialog(context,
+                          message); // Use the new method instead of _showInfoMessage
+                    },
+                  ),
+                ],
               ),
               const SizedBox(height: 16),
 
@@ -175,44 +205,47 @@ class SignupScreen extends StatelessWidget {
               ),
               const SizedBox(height: 24),
 
-              // Submit Button
               SizedBox(
                 width: double.infinity,
                 height: 48,
                 child: ElevatedButton(
-                  onPressed: () async {
-                    try {
-                      final response = await accountProvider.submitAccount();
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(response['message'] ??
-                                'Account created successfully!'),
-                          ),
-                        );
-                      }
-                    } catch (e) {
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(e.toString())),
-                        );
-                      }
-                    }
-                  },
+                  onPressed: accountProvider.isLoading
+                      ? null
+                      : () async {
+                          try {
+                            await accountProvider.submitAccount(context);
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(e.toString())),
+                              );
+                            }
+                          }
+                        },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  child: const Text(
-                    'Submit',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
+                  child: accountProvider.isLoading
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(Colors.white),
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text(
+                          'Submit',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -307,6 +340,53 @@ class SignupScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  // Add this method inside SignupScreen class
+  void _showCustomDialog(BuildContext context, String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.info_outline,
+                  color: Colors.blue,
+                  size: 36,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  message,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text(
+                    'OK',
+                    style: TextStyle(
+                      color: Colors.blue,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

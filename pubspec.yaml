@@ -42,6 +42,12 @@ dependencies:
   dio: ^5.8.0+1
   shared_preferences: ^2.5.3
   fluttertoast: ^8.2.12
+  geolocator_android: 4.6.1
+  geolocator:
+  permission_handler: ^11.2.0
+  device_info_plus: ^11.3.0
+  intl: ^0.20.2
+  
 
 dev_dependencies:
   flutter_test:

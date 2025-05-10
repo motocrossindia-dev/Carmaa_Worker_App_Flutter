@@ -6,4 +6,8 @@ class EndUrl {
   static const String verifyOtpUrl = '${baseUrl}worker/worker-auth/verify-otp/';
   static const String reginsterWorkerUrl =
       '${baseUrl}worker/worker-profile/create-worker/';
+  static const String getProfileUrl =
+      '${baseUrl}worker/worker-profile/get-profile/';
+  static const String updateProfileUrl =
+      "${baseUrl}worker/worker-profile/update-worker/";
 }

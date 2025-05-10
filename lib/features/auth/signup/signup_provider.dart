@@ -1,3 +1,6 @@
+import 'package:carmaa_worker_app/features/complete_account_individual/complete_account_individual_screen.dart';
+import 'package:carmaa_worker_app/features/complete_account_workshop/complete_account_workshop_provider.dart';
+import 'package:carmaa_worker_app/features/complete_account_workshop/complete_account_workshop_screen.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
@@ -5,6 +8,8 @@ import 'signup_repository.dart';
 
 class SignupProvider extends ChangeNotifier {
   final SignupRepository _repository = SignupRepository();
+  bool _isLoading = false;
+  bool get isLoading => _isLoading;
 
   String _name = '';
   String _email = '';
@@ -73,23 +78,68 @@ class SignupProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<Map<String, dynamic>> submitAccount() async {
+  Future<void> submitAccount(BuildContext context) async {
     // Validate required fields
     if (_name.isEmpty || _email.isEmpty || _location.isEmpty) {
       throw Exception('Please fill all required fields');
     }
 
     try {
+      _isLoading = true;
+      notifyListeners();
       final response = await _repository.createWorkerProfile(
         name: _name,
         email: _email,
         location: _location,
-        aadhar: 'dummy-aadhar', // Replace with actual aadhar number
+        aadhar: _aadharDocument,
+        profilePhoto: _photoDocument,
+        kycDocuments: _kycDocuments,
         roleType: _roleType,
       );
-      return response;
+
+      if (_roleType == 'individual') {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content:
+                  Text(response['message'] ?? 'Account created successfully!'),
+            ),
+          );
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const CompleteAccountIndividualScreen(),
+            ),
+          );
+        }
+      } else if (_roleType == 'workshop') {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content:
+                Text(response['message'] ?? 'Account created successfully!'),
+          ),
+        );
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const CompleteAccountWorkshopScreen(),
+          ),
+        );
+      } else {
+        throw Exception('Invalid role type selected');
+      }
+
+      // return response;
     } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+
       throw Exception('Failed to create account: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 

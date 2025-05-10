@@ -1,5 +1,6 @@
 import 'package:carmaa_worker_app/features/auth/login/login_provider.dart';
 import 'package:carmaa_worker_app/features/auth/signup/signup_screen.dart';
+import 'package:carmaa_worker_app/features/main_layout/main_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:pinput/pinput.dart';
 import 'package:provider/provider.dart';
@@ -78,7 +79,15 @@ class LoginScreen extends StatelessWidget {
                     SizedBox(
                       width: 120,
                       child: ElevatedButton(
-                        onPressed: () => loginProvider.sendOtp(),
+                        onPressed: () {
+                          loginProvider.sendOtp();
+                          // Navigator.push(
+                          //   context,
+                          //   MaterialPageRoute(
+                          //     builder: (context) => const MainLayout(),
+                          //   ),
+                          // );
+                        },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.blue,
                           foregroundColor: Colors.white,
